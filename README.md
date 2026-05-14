@@ -23,14 +23,6 @@ are documented as annotated patch snippets in `examples/patchpoints/`.
 - `protocol`: stable `MCOSE|F*` and `MCOSE|SKINPARTS` custom payload codecs.
 - `docs`: design notes explaining how this was wired into the real engine.
 
-## Verify
-
-```sh
-./gradlew test
-./gradlew compileJava
-git diff --check
-```
-
 ## Source Notes
 
 The implementation was derived from the MCOSE backport in:

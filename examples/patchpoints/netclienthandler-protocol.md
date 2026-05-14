@@ -24,11 +24,3 @@ if (ModProtocol.CHANNEL_SKIN_PARTS.equals(packet.channel)) {
     return;
 }
 ```
-
-```java
-// Friends verification packets are handled before generic custom payloads.
-if (FriendsRelayVerifier.isFriendsServerChannel(packet.channel)) {
-    FriendsManager.getInstance().getRelayVerifier().handleServerPacket(packet);
-    return;
-}
-```

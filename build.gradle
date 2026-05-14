@@ -19,7 +19,6 @@ tasks.withType(JavaCompile).configureEach {
 
 dependencies {
     api 'org.json:json:20231013'
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.hamcrest:hamcrest:2.2'

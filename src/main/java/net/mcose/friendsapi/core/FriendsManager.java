@@ -12,51 +12,37 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Engine-neutral version of the production FriendsManager orchestration.
- *
- * Original integration source: net.minecraft.src.friends.FriendsManager. The
- * real singleton also updates GUI toasts and presence on world transitions.
- * This reference class focuses on account switching, signed local metadata,
- * Mojang service synchronization, and username/UUID caching.
+ * Engine-neutral Mojang friends orchestration.
+ * The official service owns friend state; this class keeps only an in-memory
+ * mirror for old-engine UI and join logic.
  */
 public class FriendsManager {
-    private final FriendsFileManager fileManager;
     private final Map<String, String> usernameToUuidCache = new HashMap<String, String>();
 
     private GameSession session;
     private FriendsService mojangFriendsService;
     private FriendsList currentFriendsList;
-    private KeyPairData currentKeyPair;
     private FriendData mojangFriendData = FriendData.empty();
     private FriendPresence.VisibilityMode visibilityMode = FriendPresence.VisibilityMode.ONLINE;
 
-    public FriendsManager(File baseDirectory) {
-        this.fileManager = new FriendsFileManager(baseDirectory);
+    public FriendsManager() {
+    }
+
+    public FriendsManager(File ignoredBaseDirectory) {
     }
 
     public void onSessionReady(GameSession session) {
         this.session = session;
+        this.usernameToUuidCache.clear();
+        this.mojangFriendData = FriendData.empty();
+        this.mojangFriendsService = null;
+
         if (session == null || session.getProfileId() == null) {
             this.currentFriendsList = null;
-            this.currentKeyPair = null;
-            this.mojangFriendsService = null;
             return;
         }
 
-        String ownerUuid = session.getProfileId();
-        this.currentKeyPair = fileManager.loadKeyPair(ownerUuid);
-        if (this.currentKeyPair == null || !this.currentKeyPair.isValid() || !this.currentKeyPair.matchesOwner(ownerUuid)) {
-            this.currentKeyPair = FriendsCrypto.generateKeyPair(ownerUuid);
-            fileManager.saveKeyPair(this.currentKeyPair);
-        }
-
-        this.currentFriendsList = fileManager.loadFriendsList(ownerUuid);
-        if (this.currentFriendsList == null) {
-            this.currentFriendsList = new FriendsList(ownerUuid);
-            this.currentFriendsList.setOwnerPublicKey(this.currentKeyPair.getPublicKey());
-            saveFriendsList();
-        }
-
+        this.currentFriendsList = new FriendsList(session.getProfileId());
         if (session.hasModernToken()) {
             this.mojangFriendsService = new YggdrasilFriendsService(session.getAccessToken());
             refreshMojangFriendData();
@@ -69,7 +55,7 @@ public class FriendsManager {
         }
         FriendsService.ResultCode result = mojangFriendsService.getFriendData(data -> mojangFriendData = data == null ? FriendData.empty() : data);
         if (result == FriendsService.ResultCode.SUCCESS) {
-            mirrorMojangFriendsIntoLocalCache();
+            mirrorMojangFriends();
         }
         return result;
     }
@@ -91,10 +77,6 @@ public class FriendsManager {
         }
         FriendsService.ResultCode result = mojangFriendsService.removeFriend(profileId);
         if (result == FriendsService.ResultCode.SUCCESS) {
-            if (profileId != null && currentFriendsList != null) {
-                currentFriendsList.removeFriend(profileId.toString());
-                saveFriendsList();
-            }
             refreshMojangFriendData();
         }
         return result;
@@ -107,12 +89,6 @@ public class FriendsManager {
         return mojangFriendsService.updateFriendSettings(friendsListEnabled, allowInvites);
     }
 
-    public boolean saveFriendsList() {
-        return currentFriendsList != null
-                && currentKeyPair != null
-                && fileManager.saveFriendsList(currentFriendsList, currentKeyPair.getPrivateKey());
-    }
-
     public void setVisibilityMode(FriendPresence.VisibilityMode visibilityMode) {
         this.visibilityMode = visibilityMode == null ? FriendPresence.VisibilityMode.ONLINE : visibilityMode;
     }
@@ -122,7 +98,6 @@ public class FriendsManager {
     }
 
     public FriendsList getFriendsList() { return currentFriendsList; }
-    public KeyPairData getKeyPair() { return currentKeyPair; }
     public FriendData getMojangFriendData() { return mojangFriendData; }
     public GameSession getSession() { return session; }
 
@@ -130,20 +105,21 @@ public class FriendsManager {
         return username == null ? null : usernameToUuidCache.get(username.toLowerCase(java.util.Locale.ROOT));
     }
 
-    private void mirrorMojangFriendsIntoLocalCache() {
-        if (currentFriendsList == null) {
+    private void mirrorMojangFriends() {
+        if (session == null || session.getProfileId() == null) {
+            this.currentFriendsList = null;
             return;
         }
+        FriendsList rebuilt = new FriendsList(session.getProfileId());
+        usernameToUuidCache.clear();
         for (FriendDto friend : mojangFriendData.friends()) {
             String uuid = friend.profileId().toString().replace("-", "");
-            usernameToUuidCache.put(friend.name().toLowerCase(java.util.Locale.ROOT), uuid);
-            FriendEntry entry = currentFriendsList.getFriend(uuid);
-            if (entry == null) {
-                currentFriendsList.addFriend(new FriendEntry(uuid, friend.name()));
-            } else {
-                entry.setLastKnownName(friend.name());
+            String name = friend.name();
+            if (name != null && name.length() > 0) {
+                usernameToUuidCache.put(name.toLowerCase(java.util.Locale.ROOT), uuid);
             }
+            rebuilt.addFriend(new FriendEntry(uuid, name));
         }
-        saveFriendsList();
+        currentFriendsList = rebuilt;
     }
 }

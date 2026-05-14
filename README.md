@@ -12,15 +12,15 @@ are documented as annotated patch snippets in `examples/patchpoints/`.
 
 ## What Is Included
 
-- `core`: signed friend lists, trust state, canonical JSON, key storage, and
-  tamper detection.
+- `core`: in-memory Mojang friend-list mirroring, presence state, and
+  username/UUID lookup helpers.
 - `mojang`: a Java 8 port of the 1.22 friends and presence service shape.
 - `p2p`: signaling messages, modern session identity, and WebRTC/TCP bridge
   adapter points.
 - `auth`: restored Mojang join and hasJoined flow helpers for b1.7.3-era auth.
 - `skins`: modern skin profile parsing, 64x32 to 64x64 conversion, slim/classic
   model metadata, cape source preference, and model-part masks.
-- `protocol`: stable `MCOSE|F*` and `MCOSE|SKINPARTS` custom payload codecs.
+- `protocol`: stable mod-handshake and `MCOSE|SKINPARTS` custom payload codecs.
 - `docs`: design notes explaining how this was wired into the real engine.
 
 ## Source Notes

@@ -6,29 +6,21 @@ The b1.7.3 backport is split into three layers:
    `token:<accessToken>:<uuid>`. `auth.SessionBootstrap` creates that value and
    `adapter.GameSession` reads it.
 2. **Friends and presence**: `mojang.YggdrasilFriendsService` talks to
-   `api.minecraftservices.com`, while `core.FriendsManager` mirrors the modern
-   friend list into a signed local cache for legacy trust metadata.
+   `api.minecraftservices.com`, while `core.FriendsManager` keeps an in-memory
+   mirror for old-engine UI and join logic.
 3. **Legacy integration**: custom payloads bridge old client/server protocol
-   gaps: `MCOSE|F*` for friend verification and `MCOSE|SKINPARTS` for model
-   layer/cape preference sync.
+   gaps for `MCOSE|SKINPARTS` model layer/cape preference sync.
 
 The reference library deliberately avoids direct references to `Minecraft`,
 `Packet250CustomPayload`, `RenderEngine`, and UberBukkit server classes. Those
 dependencies are represented by tiny adapters and patchpoint snippets.
 
-## Why There Is A Local Signed Cache
+## Friend Data Ownership
 
-Mojang's friends endpoint tells the client who the user is friends with. It does
-not store beta-server mutual-verification proofs, peer public keys, or local
-tamper state. The cache in `core` exists for those extra legacy concerns.
-
-The integrity flow is:
-
-- Serialize friend metadata without `contentHash` or `fileSignature`.
-- Canonicalize the JSON with sorted keys.
-- Hash with SHA-256.
-- Sign that exact canonical string with Ed25519.
-- On load, recalculate hash first, then verify the signature.
+Mojang's friends endpoint is the source of truth for accepted friends and
+requests. The old signed local cache and beta-server mutual-proof layer have
+been removed from this reference kit; clients should refresh from Mojang
+instead of storing friend trust metadata offline.
 
 ## Why P2P Is Adapter-Based
 

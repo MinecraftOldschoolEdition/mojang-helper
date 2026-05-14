@@ -14,16 +14,6 @@ public class ProtocolCodecTest {
     }
 
     @Test
-    public void claimRoundTrip() {
-        byte[] payload = FriendsVerificationProtocol.createClaimPayload("uuid", "sig", 123L, "pub");
-        FriendsVerificationProtocol.ClaimPayload claim = FriendsVerificationProtocol.readClaimPayload(payload);
-        assertEquals("uuid", claim.friendUuid);
-        assertEquals("sig", claim.signature);
-        assertEquals(123L, claim.addedAt);
-        assertEquals("pub", claim.publicKey);
-    }
-
-    @Test
     public void helloAckRoundTrip() {
         byte[] payload = ModProtocol.createHelloAckPayload(ModProtocol.PROTOCOL_VERSION, ModProtocol.FEATURE_SKIN_PARTS_SYNC);
         ModProtocol.HelloInfo info = ModProtocol.readHelloInfo(payload);

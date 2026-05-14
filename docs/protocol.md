@@ -1,17 +1,5 @@
 # Protocol
 
-## Friends Channels
-
-- `MCOSE|FHELLO`: client-to-client hello and public key exchange
-- `MCOSE|FCLAIM`: signed claim that one UUID added another
-- `MCOSE|FACK`: claim accepted/rejected
-- `MCOSE|FRESULT`: final mutual-verification result
-- `MCOSE|FQUERY`: ask a server whether a friend UUID is online
-- `MCOSE|FONLINE`: server response for online query
-- `MCOSE|FVERIFY`: request server-assisted verification
-- `MCOSE|FCONFIRM`: server verification result
-- `MCOSE|FCHECK`: unauthenticated/menu-side claim check
-
 ## Skin Parts
 
 `MCOSE|SKINPARTS` payload:

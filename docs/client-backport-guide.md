@@ -18,7 +18,7 @@ In this reference repo the same idea is:
 
 ```java
 GameSession session = SessionBootstrap.resolveFromCommandLine(args);
-FriendsManager manager = new FriendsManager(new File(minecraftDir, ".minecraftoldschool/friends"));
+FriendsManager manager = new FriendsManager();
 manager.onSessionReady(session);
 ```
 
@@ -43,18 +43,5 @@ Those hooks update presence and stop any active P2P bridge when leaving a world.
 
 ## Packet Handling
 
-Route custom payloads before generic mod payload handling:
-
-```java
-if (FriendsRelayVerifier.isFriendsServerChannel(packet.channel)) {
-    FriendsManager.getInstance().getRelayVerifier().handleServerPacket(packet);
-    return;
-}
-if (FriendsPacketChannels.isFriendsChannel(packet.channel)) {
-    Packet250CustomPayload response = FriendsManager.getInstance().getHandshakeHandler().handlePacket(packet);
-    if (response != null) {
-        addToSendQueue(response);
-    }
-    return;
-}
-```
+The friends list relies on Mojang service data now. Keep the normal mod payload
+handling for features such as skin-part sync.
